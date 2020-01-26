@@ -1,0 +1,22 @@
+{
+  "name": "dnd-table",
+  "version": "1.0.0",
+  "description": "A web application for Raspberry Pi that provides a quick Dungeons & Dragons setup.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ricool06/dnd-table.git"
+  },
+  "author": "Ricool06",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Ricool06/dnd-table/issues"
+  },
+  "homepage": "https://github.com/Ricool06/dnd-table#readme",
+  "devDependencies": {
+    "lerna": "^3.20.2"
+  }
+}
