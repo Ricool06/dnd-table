@@ -12,7 +12,7 @@ export class AuthService {
   }
 
   login(user) {
-    const payload = { sub: user.username };
-    return { jwt: this.jwtService.sign(payload) };
+    const payload = { name: user.username };
+    return { jwt: this.jwtService.sign(payload, { subject: user.usernam }) };
   }
 }

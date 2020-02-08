@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { DndGateway } from './dnd-gateway.gateway';
 import { LoginController } from './login/login.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth/auth.service';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './auth/local.strategy';
+import { JwtStrategy } from './auth/jwt.strategy';
+import { GatewayModule } from './gateway/gateway.module';
+import { DndGateway } from './gateway/dnd-gateway.gateway';
 
 @Module({
   imports: [
@@ -13,8 +15,9 @@ import { LocalStrategy } from './auth/local.strategy';
       signOptions: { expiresIn: '60s' },
     }),
     PassportModule,
+    GatewayModule,
   ],
   controllers: [LoginController],
-  providers: [DndGateway, AuthService, LocalStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
 })
 export class AppModule {}
