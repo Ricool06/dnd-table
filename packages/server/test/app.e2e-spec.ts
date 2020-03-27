@@ -3,15 +3,23 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from './../src/app.module';
 import * as io from 'socket.io-client';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { SetImageMessage } from 'src/models';
+import * as request from 'supertest';
+import { JwtService } from '@nestjs/jwt';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   let appAddress: string;
+  let overriddenJwtService: JwtService;
 
   beforeEach(async () => {
+    overriddenJwtService = new JwtService({ secret: 'test', signOptions: { expiresIn: '60s' } });
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+    .overrideProvider(JwtService).useValue(overriddenJwtService)
+    .compile();
 
     app = moduleFixture.createNestApplication();
     app.useWebSocketAdapter(new IoAdapter(app));
@@ -21,25 +29,29 @@ describe('AppController (e2e)', () => {
     appAddress = await app.getUrl();
   });
 
-  // it('/ (GET)', () => {
-  //   return request(app.getHttpServer())
-  //     .get('/')
-  //     .expect(200)
-  //     .expect('Hello World!');
-  // });
+  it('should allow users to log in', (done) => {
+    const body = { username: 'ricool', password: 'pass' };
+    const expectedToken = overriddenJwtService
+      .sign({ username: body.username }, { subject: body.username });
 
-  it('should handle websocket connections', (done) => {
-    console.log('TEST STARTED %s', appAddress);
-    const ws = io('ws://localhost:3000');
-
-    ws.on('connect', () => console.log('CONNECTED'));
-
-    ws.on('events', (data) => {
-        expect(data.toString()).toBe('Hello world!');
-        done();
-    });
-
-    console.log('ABOUT TO EMIT');
-    ws.emit('events', 'Hello?');
+    request(appAddress)
+      .post('/dm/login')
+      .send()
+      .expect(200)
+      .expect({ jwt: expectedToken })
+      .end((err) => done(err));
   });
+
+  // it('should allow users to upload an image, then emit a set image message', (done) => {
+  //   console.log(`APP ADDRESS: ${appAddress}`);
+  //   const ws = io(appAddress);
+  //   const expectedImage = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAFklEQVQI12P4z8DAwPCfheE/AwMDIwAaEQMDtXIIUQAAAABJRU5ErkJggg==';
+
+  //   ws.on('set image', (data: SetImageMessage) => {
+  //     expect(data.image).toBe(expectedImage);
+  //     done();
+  //   });
+
+  //   ws.emit('upload image', expectedImage);
+  // });
 });

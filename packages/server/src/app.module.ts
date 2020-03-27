@@ -11,7 +11,7 @@ import { DndGateway } from './gateway/dnd-gateway.gateway';
 @Module({
   imports: [
     JwtModule.register({
-      secret: 'secretKey',
+      secret: 'test',
       signOptions: { expiresIn: '60s' },
     }),
     PassportModule,
