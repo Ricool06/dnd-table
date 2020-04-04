@@ -1,25 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { AppModule } from './../src/app.module';
-import * as io from 'socket.io-client';
+import { ConfigService } from '@nestjs/config';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { SetImageMessage } from 'src/models';
+import { JwtPayload, User } from 'src/models';
 import * as request from 'supertest';
 import { JwtService } from '@nestjs/jwt';
+import { AppModule } from '../src/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   let appAddress: string;
   let overriddenJwtService: JwtService;
+  let overriddenConfigService: ConfigService;
 
-  beforeEach(async () => {
-    overriddenJwtService = new JwtService({ secret: 'test', signOptions: { expiresIn: '60s' } });
+  beforeAll(async () => {
+    overriddenJwtService = new JwtService({ secret: 'meme', signOptions: { expiresIn: '60s' } });
+    overriddenConfigService = new ConfigService({
+      DND_TABLE_USERNAME: 'admin',
+      DND_TABLE_PASSWORD: 'changeme'
+    });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-    .overrideProvider(JwtService).useValue(overriddenJwtService)
-    .compile();
+      .overrideProvider(ConfigService).useValue(overriddenConfigService)
+      .overrideProvider(JwtService).useValue(overriddenJwtService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useWebSocketAdapter(new IoAdapter(app));
@@ -29,17 +35,35 @@ describe('AppController (e2e)', () => {
     appAddress = await app.getUrl();
   });
 
-  it('should allow users to log in', (done) => {
-    const body = { username: 'ricool', password: 'pass' };
-    const expectedToken = overriddenJwtService
-      .sign({ username: body.username }, { subject: body.username });
+  it('should allow valid users to log in', async () => {
+    const body: User = {
+      username: overriddenConfigService.get('DND_TABLE_USERNAME'),
+      password: overriddenConfigService.get('DND_TABLE_PASSWORD'),
+    };
 
-    request(appAddress)
+    const expectedToken = overriddenJwtService
+      .sign(
+        { name: body.username } as JwtPayload,
+        { subject: body.username },
+      );
+
+    await request(appAddress)
       .post('/dm/login')
-      .send()
+      .send(body)
       .expect(200)
-      .expect({ jwt: expectedToken })
-      .end((err) => done(err));
+      .expect({ jwt: expectedToken });
+  });
+
+  it('should not allow invalid users to log in', async () => {
+    const body: User = {
+      username: 'notValidUser',
+      password: 'notValidPassword',
+    };
+
+    await request(appAddress)
+      .post('/dm/login')
+      .send(body)
+      .expect(401);
   });
 
   // it('should allow users to upload an image, then emit a set image message', (done) => {

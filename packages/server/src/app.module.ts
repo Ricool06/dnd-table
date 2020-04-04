@@ -6,7 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './auth/local.strategy';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { GatewayModule } from './gateway/gateway.module';
-import { DndGateway } from './gateway/dnd-gateway.gateway';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -16,6 +16,7 @@ import { DndGateway } from './gateway/dnd-gateway.gateway';
     }),
     PassportModule,
     GatewayModule,
+    ConfigModule,
   ],
   controllers: [LoginController],
   providers: [AuthService, LocalStrategy, JwtStrategy],

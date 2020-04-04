@@ -30,7 +30,7 @@ describe('Login Controller', () => {
   it('should allow valid users to login', () => {
     const expectedResult = { jwt: validJwt };
     const spy = jest.spyOn(authServiceMock, 'login');
-    spy.mockImplementationOnce((user) => expectedResult);
+    spy.mockImplementationOnce(() => expectedResult);
 
     const result = controller.loginDm({ username: 'meme', password: 'pass' });
 
